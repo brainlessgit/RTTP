@@ -2,13 +2,12 @@ package com.kisel.algo;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
 /**
- * Hello world!
+ * Reading input values from `1.in` and prints result to `1.out`.
  *
  */
 public class App {

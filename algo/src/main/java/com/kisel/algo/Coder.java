@@ -1,11 +1,5 @@
 package com.kisel.algo;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
-/**
- *
- * @author brainless
- */
 public class Coder {
 
     private final String from;
