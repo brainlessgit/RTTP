@@ -1,0 +1,28 @@
+option java_package = "com.kisel.gen";
+option java_outer_classname="ProtoMessages";
+
+message Alien {
+    required int32 id = 1;
+    required string name = 2;
+    optional string password = 3;
+    optional string lang = 4;
+    optional int32 address  = 5;
+}
+
+message AuthReq {
+    required string name = 1;
+    required string password = 2;
+}
+
+message AuthRes {
+    required bool success = 1;
+    optional Alien alien = 2;
+}
+
+message SearchReq {
+    optional string name = 1;
+}
+
+message SearchRes {
+    repeated Alien alien = 1;
+}
