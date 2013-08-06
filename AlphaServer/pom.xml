@@ -45,6 +45,8 @@
                     <arguments>
                         <argument>localhost</argument>
                         <argument>3129</argument>
+                        <argument>alphabase</argument>
+                        
                     </arguments>
                 </configuration>
             </plugin>

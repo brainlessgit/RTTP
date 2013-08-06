@@ -9,12 +9,14 @@ import java.io.OutputStream;
 public abstract class MessageHandler {
 
     protected MessageHandler nextHandler;
+    protected DBHandler dbHandler;
 
     public MessageHandler() {
     }
 
-    public MessageHandler(MessageHandler nextHandler) {
+    public MessageHandler(MessageHandler nextHandler, DBHandler dbHandler) {
         this.nextHandler = nextHandler;
+        this.dbHandler = dbHandler;
     }
 
     public void handleMessage(byte[] message, OutputStream outputStream) {

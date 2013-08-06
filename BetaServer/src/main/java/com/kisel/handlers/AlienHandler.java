@@ -11,8 +11,8 @@ import java.io.OutputStream;
  */
 public class AlienHandler extends MessageHandler {
 
-    public AlienHandler(MessageHandler nextMessageHandler) {
-        super(nextMessageHandler);
+    public AlienHandler(MessageHandler nextMessageHandler, DBHandler dbHandler) {
+        super(nextMessageHandler, dbHandler);
     }
 
     @Override
@@ -20,14 +20,31 @@ public class AlienHandler extends MessageHandler {
         try {
             Alien alien = Alien.parseFrom(message);
             AuthRes.Builder authRes = AuthRes.newBuilder();
-            authRes.setSuccess(true)
-                    .setAlien(alien);
-//                authRes.setSuccess(false);
+            int res;
+            dbHandler.connect();
+            res = dbHandler.persist(alien);
+            dbHandler.closeAll();
+
+            if (res > 0) {
+                Alien savedAlien = Alien.newBuilder()
+                        .setId(res)
+                        .setName(alien.getName())
+                        .setPassword(alien.getPassword())
+                        .setLang(alien.getLang())
+                        .setAddress(alien.getAddress())
+                        .build();
+                authRes.setSuccess(true)
+                        .setAlien(savedAlien);
+            } else {
+                authRes.setSuccess(false);
+            }
             outputStream.write(authRes.build().toByteArray());
             outputStream.flush();
-
+            System.out.println("ALIEN SAVED");
         } catch (Exception e) {
-            nextHandler.handleMessage(message, outputStream);
+            if (nextHandler != null) {
+                nextHandler.handleMessage(message, outputStream);
+            }
         }
     }
 }

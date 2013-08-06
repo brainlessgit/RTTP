@@ -52,6 +52,45 @@ public class Controller {
         return false;
     }
 
+    public Alien auth(String name, String password) {
+        Alien alien = null;
+        OutputStream os;
+        InputStream is;
+        ProtoMessages.AuthReq authReq = ProtoMessages.AuthReq.newBuilder()
+                .setName(name)
+                .setPassword(password)
+                .build();
+        ProtoMessages.AuthRes authRes;
+        byte[] toSend = authReq.toByteArray();
+        byte[] recived;
+        try {
+            os = alphaServer.getOutputStream();
+            is = alphaServer.getInputStream();
+            os.write(toSend);
+            os.flush();
+            recived = reciveMessage(is);
+            authRes = ProtoMessages.AuthRes.parseFrom(recived);
+            if (!authRes.getSuccess()) {
+                os = betaServer.getOutputStream();
+                is = betaServer.getInputStream();
+                os.write(toSend);
+                os.flush();
+                recived = reciveMessage(is);
+                authRes = ProtoMessages.AuthRes.parseFrom(recived);
+            }
+            if (authRes.getSuccess()) {
+                alien = new Alien();
+                alien.setName(authRes.getAlien().getName());
+//                alien.setPassword(password);
+                alien.setLang(authRes.getAlien().getLang());
+                alien.setAddress(authRes.getAlien().getAddress());
+            }
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+        return alien;
+    }
+
     public static byte[] reciveMessage(InputStream inputStream) {
         try {
             byte buf[] = new byte[1024];
@@ -60,7 +99,7 @@ public class Controller {
             System.arraycopy(buf, 0, temp, 0, count);
             return temp;
         } catch (IOException e) {
-            System.out.println(e);
+            System.out.println("recive mess ex: " + e);
         }
         return null;
     }

@@ -11,8 +11,8 @@ import java.io.OutputStream;
  */
 public class AuthReqHandler extends MessageHandler {
 
-    public AuthReqHandler(MessageHandler nextMessageHandler) {
-        super(nextMessageHandler);
+    public AuthReqHandler(MessageHandler nextMessageHandler, DBHandler dbHandler) {
+        super(nextMessageHandler, dbHandler);
     }
 
     @Override
@@ -20,11 +20,10 @@ public class AuthReqHandler extends MessageHandler {
         try {
             AuthRes.Builder authRes = AuthRes.newBuilder();
             AuthReq authReq = AuthReq.parseFrom(message);
-            if ("aaa".equals(authReq.getName()) && "bbb".equals(authReq.getPassword())) {
-                Alien alien = Alien.newBuilder()
-                        .setId(1)
-                        .setName("aaa")
-                        .build();
+            dbHandler.connect();
+            Alien alien = dbHandler.auth(authReq);
+            dbHandler.closeAll();
+            if (alien != null) {
                 authRes.setSuccess(true)
                         .setAlien(alien);
             } else {
@@ -33,7 +32,9 @@ public class AuthReqHandler extends MessageHandler {
             outputStream.write(authRes.build().toByteArray());
             outputStream.flush();
         } catch (Exception e) {
-            nextHandler.handleMessage(message, outputStream);
+            if (nextHandler != null) {
+                nextHandler.handleMessage(message, outputStream);
+            }
         }
     }
 }
