@@ -6,6 +6,7 @@ import com.kisel.gen.ProtoMessages;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
 
 /**
  *
@@ -21,7 +22,21 @@ public class Controller {
         this.betaServer = betaServer;
     }
 
-    public boolean Register(Alien alien) {
+    public Controller() {
+        try {
+            alphaServer = new Socket("localhost", 3129);
+        } catch (IOException e) {
+            System.out.println("Can't connect to alpha server.");
+        }
+        try {
+            betaServer = new Socket("localhost", 3128);
+        } catch (IOException e) {
+            System.out.println("Can't connect to beta server.");
+        }
+
+    }
+
+    public boolean register(Alien alien) {
         OutputStream os;
         InputStream is;
         ProtoMessages.Alien alienMessage = ProtoMessages.Alien.newBuilder()
@@ -41,8 +56,6 @@ public class Controller {
                 is = betaServer.getInputStream();
             }
             os.write(toSend);
-            os.flush();
-
             byte[] recived = reciveMessage(is);
             ProtoMessages.AuthRes authRes = ProtoMessages.AuthRes.parseFrom(recived);
             return authRes.getSuccess();
@@ -67,14 +80,12 @@ public class Controller {
             os = alphaServer.getOutputStream();
             is = alphaServer.getInputStream();
             os.write(toSend);
-            os.flush();
             recived = reciveMessage(is);
             authRes = ProtoMessages.AuthRes.parseFrom(recived);
             if (!authRes.getSuccess()) {
                 os = betaServer.getOutputStream();
                 is = betaServer.getInputStream();
                 os.write(toSend);
-                os.flush();
                 recived = reciveMessage(is);
                 authRes = ProtoMessages.AuthRes.parseFrom(recived);
             }

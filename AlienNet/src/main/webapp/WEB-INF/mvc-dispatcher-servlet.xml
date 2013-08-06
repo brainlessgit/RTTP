@@ -14,12 +14,14 @@
 
     <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <property name="prefix">
-            <value>../</value>
+            <value>./</value>
         </property>
         <property name="suffix">
             <value>.jsp</value>
         </property>
     </bean>
+    
+    <bean scope="singleton" id="DistController" class="com.kisel.client.controller.Controller"/>
 
 </beans>
 

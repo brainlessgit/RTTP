@@ -27,7 +27,7 @@ public class App {
             a.setLang("01");
             a.setAddress(12);
             a.setPassword("pass");
-            boolean b = controller.Register(a);
+            boolean b = controller.register(a);
             System.out.println(b);
             
             Alien fromDB = controller.auth("vasia2", "pass");

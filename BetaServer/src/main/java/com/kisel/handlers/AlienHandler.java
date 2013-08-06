@@ -1,6 +1,5 @@
 package com.kisel.handlers;
 
-import com.kisel.gen.ProtoMessages;
 import com.kisel.gen.ProtoMessages.Alien;
 import com.kisel.gen.ProtoMessages.AuthRes;
 import java.io.OutputStream;
