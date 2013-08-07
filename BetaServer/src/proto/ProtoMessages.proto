@@ -24,5 +24,6 @@ message SearchReq {
 }
 
 message SearchRes {
-    repeated Alien alien = 1;
+	required int32 count = 1;
+    repeated Alien alien = 2;
 }

@@ -2,14 +2,15 @@ package com.kisel.handlers;
 
 import com.kisel.gen.ProtoMessages.Alien;
 import com.kisel.gen.ProtoMessages.AuthReq;
+import com.kisel.gen.ProtoMessages.SearchReq;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -24,6 +25,7 @@ public class DBHandler {
     private final String dbName;
     private static final String PERSIST_ALIEN = "INSERT INTO Alien(name, password, lang, address) VALUES (?, ?, ?, ?)";
     private static final String AUTH_ALIEN = "SELECT id, name, password, lang, address FROM Alien WHERE name = ? AND password = ?";
+    private static final String SEARCH_ALIEN = "SELECT id, name, password, lang, address FROM Alien WHERE name LIKE ?";
 
     public DBHandler(String dbName) {
         this.dbName = dbName;
@@ -75,13 +77,34 @@ public class DBHandler {
                         .setPassword(resultSet.getString(3))
                         .setLang(resultSet.getString(4))
                         .setAddress(resultSet.getInt(5));
-                return alien.build();       
+                return alien.build();
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             System.out.println(e);
         }
         return null;
+    }
 
+    public List<Alien> search(SearchReq searchReq) {
+        List<Alien> result = new ArrayList<Alien>();
+        try {
+            preparedStatement = connect.prepareStatement(SEARCH_ALIEN);
+            preparedStatement.setObject(1, "%" + searchReq.getName() + "%");
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Alien alien = Alien.newBuilder()
+                        .setId(resultSet.getInt(1))
+                        .setName(resultSet.getString(2))
+                        .setPassword(resultSet.getString(3))
+                        .setLang(resultSet.getString(4))
+                        .setAddress(resultSet.getInt(5))
+                        .build();
+                result.add(alien);
+            }
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+        return result;
     }
 
     public void closeAll() {

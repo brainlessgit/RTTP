@@ -38,8 +38,6 @@ public class AlienHandler extends MessageHandler {
                 authRes.setSuccess(false);
             }
             outputStream.write(authRes.build().toByteArray());
-            outputStream.flush();
-            System.out.println("ALIEN SAVED");
         } catch (Exception e) {
             if (nextHandler != null) {
                 nextHandler.handleMessage(message, outputStream);
