@@ -1,1 +1,11 @@
 This is repo for rttp tasks.
+
+To run distributed application:
+  - run each server (alpha and beta) using maven plugin with command `mvn exec:java`;
+  - each server needs database, db conf later;
+  - deploy Spring app on Tomcat.
+
+After that next services would be available:
+  - `/AlienNet/register` for registering new Alien(user) with `Ok` message in success case;
+  - `/AlienNet/login/<name>/<password>` for authenticating, returns `Ok` or `Bad:(` messages;
+  - `/AlienNet/search/<search-param>` with searching by name, displays found aliens. 
