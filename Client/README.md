@@ -6,6 +6,7 @@ Client's interface are in `com.kisel.client.controller.Controller.java` and cons
   * `boolean register(Alien alien)`;
   * `Alien auth(String name, String password)`;
   * `List<Alien> search(String name)`.
+
 So it uses for registration, authenticating and searching Aliens.
 
 Data partitioning idea is implemented here. Directly in `register` method. Every Alien have an `address` (integer, maybe ip). With some trivial algorithm "client" chooses a server where Alien must be persisted.
