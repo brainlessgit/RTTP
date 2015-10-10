@@ -1,26 +1,35 @@
 package com.kisel.client.controller;
 
 import com.kisel.aliennet.model.Alien;
+
 import java.net.Socket;
+
 import com.kisel.gen.ProtoMessages;
 import com.kisel.gen.ProtoMessages.AuthReq;
 import com.kisel.gen.ProtoMessages.AuthRes;
 import com.kisel.gen.ProtoMessages.SearchReq;
 import com.kisel.gen.ProtoMessages.SearchRes;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import static com.kisel.client.App.*;
 /**
- *
  * @author brainless
  */
 public class Controller {
 
+    private static final Logger logger = Logger.getLogger(Controller.class.getName());
     private List<Socket> servers;
+
+    private AtomicInteger roundRobinThing = new AtomicInteger();
 
     public Controller(Socket... servers) {
         this.servers = new ArrayList<Socket>();
@@ -30,14 +39,14 @@ public class Controller {
     public Controller() {
         servers = new ArrayList<Socket>();
         try {
-            servers.add(new Socket("localhost", 3129));
+            servers.add(new Socket(ALPHA_SERVER_HOSTNAME, ALPHA_SERVER_PORT));
         } catch (IOException e) {
-            System.out.println("Can't connect to alpha server.");
+            logger.log(Level.WARNING, "Failed to connect to alpha server", e);
         }
         try {
-            servers.add(new Socket("localhost", 3128));
+            servers.add(new Socket(BETA_SERVER_HOSTNAME, BETA_SERVER_PORT));
         } catch (IOException e) {
-            System.out.println("Can't connect to beta server.");
+            logger.log(Level.WARNING, "Failed to connect to beta server", e);
         }
 
     }
@@ -54,20 +63,24 @@ public class Controller {
                 .build();
         byte[] toSend = alienMessage.toByteArray();
         try {
-            int magiConst = 1000;
-            int serverCount = servers.size();
-            int chosenServer =
-                    alien.getAddress() / (magiConst / (serverCount - 1));
+            int chosenServer = chooseServer(alien);
             os = servers.get(chosenServer).getOutputStream();
             is = servers.get(chosenServer).getInputStream();
             os.write(toSend);
-            byte[] recived = reciveMessage(is);
-            AuthRes authRes = AuthRes.parseFrom(recived);
+            byte[] received = receiveMessage(is);
+            AuthRes authRes = AuthRes.parseFrom(received);
             return authRes.getSuccess();
         } catch (IOException e) {
-            System.out.println(e);
+            logger.log(Level.WARNING, "Failed to register alien", e);
         }
         return false;
+    }
+
+    private int chooseServer(Alien alien) {
+        if (servers.size() < 1) {
+            throw new IllegalStateException("There are no servers. Please start at least one and restart the app.");
+        }
+        return roundRobinThing.incrementAndGet() % servers.size();
     }
 
     public Alien auth(String name, String password) {
@@ -80,14 +93,14 @@ public class Controller {
                 .build();
         AuthRes authRes;
         byte[] toSend = authReq.toByteArray();
-        byte[] recived;
+        byte[] received;
         try {
             for (Socket server : servers) {
                 os = server.getOutputStream();
                 is = server.getInputStream();
                 os.write(toSend);
-                recived = reciveMessage(is);
-                authRes = AuthRes.parseFrom(recived);
+                received = receiveMessage(is);
+                authRes = AuthRes.parseFrom(received);
                 if (authRes.getSuccess()) {
                     alien = new Alien();
                     alien.setName(authRes.getAlien().getName());
@@ -98,7 +111,7 @@ public class Controller {
                 }
             }
         } catch (IOException e) {
-            System.out.println(e);
+            logger.log(Level.WARNING, "Failed to auth alien", e);
         }
         return alien;
     }
@@ -110,7 +123,7 @@ public class Controller {
                 .build();
         SearchRes searchRes;
         byte[] toSend = searchReq.toByteArray();
-        byte[] recived;
+        byte[] received;
         OutputStream os;
         InputStream is;
         try {
@@ -118,9 +131,9 @@ public class Controller {
                 is = server.getInputStream();
                 os = server.getOutputStream();
                 os.write(toSend);
-                recived = reciveMessage(is);
-                System.out.println("searching in, lengh: " + recived.length);
-                searchRes = SearchRes.parseFrom(recived);
+                received = receiveMessage(is);
+
+                searchRes = SearchRes.parseFrom(received);
                 for (ProtoMessages.Alien ai : searchRes.getAlienList()) {
                     Alien alien = new Alien();
                     alien.setName(ai.getName());
@@ -130,12 +143,12 @@ public class Controller {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING, "Failed to execute search", e);
         }
         return result;
     }
 
-    public static byte[] reciveMessage(InputStream inputStream) {
+    public static byte[] receiveMessage(InputStream inputStream) {
         try {
             byte buf[] = new byte[8 * 1024];
             int count = inputStream.read(buf);
@@ -145,7 +158,7 @@ public class Controller {
                 return temp;
             }
         } catch (IOException e) {
-            System.out.println("recive mess ex: " + e);
+            logger.log(Level.WARNING, "Failed to receiver message");
         }
         return null;
     }

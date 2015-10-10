@@ -1,7 +1,5 @@
 package com.kisel.server;
 
-import com.kisel.gen.ProtoMessages;
-import com.kisel.gen.ProtoMessages.Alien;
 import com.kisel.handlers.AlienHandler;
 import com.kisel.handlers.AuthReqHandler;
 import com.kisel.handlers.DBHandler;
@@ -10,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -17,8 +17,10 @@ import java.net.Socket;
  */
 public class Processor extends Thread {
 
-    private Socket s;
+    private       Socket s;
     private final String dbName;
+
+    private static final Logger logger = Logger.getLogger(Processor.class.getName());
 
     public Processor(Socket s, String dbName) {
         this.s = s;
@@ -40,15 +42,15 @@ public class Processor extends Thread {
             InputStream inputStream = s.getInputStream();
             OutputStream outputStream = s.getOutputStream();
             byte[] message;
-            while ((message = reciveMessage(inputStream)) != null) {
+            while ((message = receiveMessage(inputStream)) != null) {
                 alienHandler.handleMessage(message, outputStream);
             }
         } catch (IOException e) {
-            System.out.println(e);
+            logger.log(Level.SEVERE, "Failed to handle message", e);
         }
     }
 
-    public static byte[] reciveMessage(InputStream inputStream) {
+    public static byte[] receiveMessage(InputStream inputStream) {
         try {
             byte buf[] = new byte[1024];
             int count = inputStream.read(buf);
@@ -58,7 +60,7 @@ public class Processor extends Thread {
                 return temp;
             }
         } catch (Exception e) {
-            System.out.println(e);
+            logger.log(Level.WARNING, "Failed to read message", e);
         }
         return null;
     }

@@ -11,6 +11,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -18,52 +20,61 @@ import java.util.List;
  */
 public class DBHandler {
 
+    private static final Logger logger = Logger.getLogger(DBHandler.class.getName());
+
     private Connection connect;
     private Statement statement;
     private PreparedStatement preparedStatement;
     private ResultSet resultSet;
     private final String dbName;
     private static final String PERSIST_ALIEN = "INSERT INTO Alien(name, password, lang, address) VALUES (?, ?, ?, ?)";
-    private static final String AUTH_ALIEN = "SELECT id, name, password, lang, address FROM Alien WHERE name = ? AND password = ?";
-    private static final String SEARCH_ALIEN = "SELECT id, name, password, lang, address FROM Alien WHERE name LIKE ?";
+    private static final String AUTH_ALIEN    = "SELECT id, name, password, lang, address FROM Alien WHERE name = ? AND password = ?";
+    private static final String SEARCH_ALIEN  = "SELECT id, name, password, lang, address FROM Alien WHERE name LIKE ?";
 
     public DBHandler(String dbName) {
         this.dbName = dbName;
     }
 
-    public void connect() {
+    public void connect() throws Exception {
         try {
+//            Class.forName("akka.Actor");
             Class.forName("org.postgresql.Driver");
+//            DriverManager.registerDriver(new org.postgresql.Driver());
             connect = DriverManager.getConnection(
                     "jdbc:postgresql://localhost:5432/" + dbName,
-                    "postgres", "rthsdybr");
+                    "rttp", "password");
         } catch (SQLException ex) {
-            System.out.println(ex);
+            logger.log(Level.SEVERE, "Failed to connect to db", ex);
+            throw ex;
         } catch (ClassNotFoundException ex) {
-            System.out.println(ex);
+            logger.log(Level.SEVERE, "Failed to connect to db ", ex);
+            throw ex;
         }
     }
 
     public int persist(Alien alien) {
-        int res = 0;
+        logger.log(Level.INFO, "Persisting alien" + alien);
+        int alienId = 0;
         try {
             preparedStatement = connect.prepareStatement(PERSIST_ALIEN);
             preparedStatement.setObject(1, alien.getName());
             preparedStatement.setObject(2, alien.getPassword());
             preparedStatement.setObject(3, alien.getLang());
             preparedStatement.setObject(4, alien.getAddress());
-            res = preparedStatement.executeUpdate();
+            // check this shi
+            alienId = preparedStatement.executeUpdate();
             resultSet = preparedStatement.getGeneratedKeys();
             if (resultSet.next()) {
-                return resultSet.getInt(1);
+                alienId = resultSet.getInt(1);
             }
         } catch (SQLException e) {
-            System.out.println(e);
+            logger.log(Level.WARNING, "Failed to persist alien, preparedStatement = " + preparedStatement, e);
         }
-        return res;
+        return alienId;
     }
 
     public Alien auth(AuthReq authReq) {
+        logger.log(Level.INFO, "Authenticating " + authReq);
         try {
             Alien.Builder alien;
             preparedStatement = connect.prepareStatement(AUTH_ALIEN);
@@ -80,7 +91,7 @@ public class DBHandler {
                 return alien.build();
             }
         } catch (SQLException e) {
-            System.out.println(e);
+            logger.log(Level.WARNING, "Failed to auth alien", e);
         }
         return null;
     }
@@ -102,7 +113,7 @@ public class DBHandler {
                 result.add(alien);
             }
         } catch (SQLException e) {
-            System.out.println(e);
+            logger.log(Level.WARNING, "Failed to execute search", e);
         }
         return result;
     }
@@ -122,7 +133,7 @@ public class DBHandler {
                 connect.close();
             }
         } catch (SQLException e) {
-            System.out.println(e);
+            logger.log(Level.WARNING, "Failed to close connections", e);
         }
     }
 }

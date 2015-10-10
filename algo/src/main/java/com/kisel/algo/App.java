@@ -12,7 +12,7 @@ import java.io.IOException;
  */
 public class App {
 
-    public static void main(String... arr) {
+    public static void main(String... arr) throws IOException {
         int n;
         try {
             BufferedReader br = new BufferedReader(new FileReader("1.in"));
@@ -28,6 +28,7 @@ public class App {
             bw.close();
         } catch (IOException e) {
             System.out.println("smth frong with file");
+            throw e;
         }
     }
 }
